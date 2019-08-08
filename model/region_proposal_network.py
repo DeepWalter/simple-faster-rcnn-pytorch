@@ -112,7 +112,8 @@ class RegionProposalNetwork(nn.Module):
         rpn_locs = rpn_locs.permute(0, 2, 3, 1).contiguous().view(n, -1, 4)
         rpn_scores = self.score(h)
         rpn_scores = rpn_scores.permute(0, 2, 3, 1).contiguous()
-        rpn_softmax_scores = F.softmax(rpn_scores.view(n, hh, ww, n_anchor, 2), dim=4)
+        rpn_softmax_scores = F.softmax(
+            rpn_scores.view(n, hh, ww, n_anchor, 2), dim=4)
         rpn_fg_scores = rpn_softmax_scores[:, :, :, :, 1].contiguous()
         rpn_fg_scores = rpn_fg_scores.view(n, -1)
         rpn_scores = rpn_scores.view(n, -1, 2)
@@ -156,7 +157,7 @@ def _enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
     A = anchor_base.shape[0]
     K = shift.shape[0]
     anchor = anchor_base.reshape((1, A, 4)) + \
-             shift.reshape((1, K, 4)).transpose((1, 0, 2))
+        shift.reshape((1, K, 4)).transpose((1, 0, 2))
     anchor = anchor.reshape((K * A, 4)).astype(np.float32)
     return anchor
 
@@ -172,17 +173,17 @@ def _enumerate_shifted_anchor_torch(anchor_base, feat_stride, height, width):
 
     # !TODO: add support for torch.CudaTensor
     # xp = cuda.get_array_module(anchor_base)
-    import torch as t
+
     shift_y = t.arange(0, height * feat_stride, feat_stride)
     shift_x = t.arange(0, width * feat_stride, feat_stride)
-    shift_x, shift_y = xp.meshgrid(shift_x, shift_y)
-    shift = xp.stack((shift_y.ravel(), shift_x.ravel(),
+    shift_x, shift_y = np.meshgrid(shift_x, shift_y)
+    shift = np.stack((shift_y.ravel(), shift_x.ravel(),
                       shift_y.ravel(), shift_x.ravel()), axis=1)
 
     A = anchor_base.shape[0]
     K = shift.shape[0]
     anchor = anchor_base.reshape((1, A, 4)) + \
-             shift.reshape((1, K, 4)).transpose((1, 0, 2))
+        shift.reshape((1, K, 4)).transpose((1, 0, 2))
     anchor = anchor.reshape((K * A, 4)).astype(np.float32)
     return anchor
 
@@ -193,7 +194,8 @@ def normal_init(m, mean, stddev, truncated=False):
     """
     # x is a parameter
     if truncated:
-        m.weight.data.normal_().fmod_(2).mul_(stddev).add_(mean)  # not a perfect approximation
+        m.weight.data.normal_().fmod_(2).mul_(stddev).add_(
+            mean)  # not a perfect approximation
     else:
         m.weight.data.normal_(mean, stddev)
         m.bias.data.zero_()
