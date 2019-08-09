@@ -1,15 +1,11 @@
 import numpy as np
-import numpy as xp
-
-import six
-from six import __init__
 
 
 def loc2bbox(src_bbox, loc):
     """Decode bounding boxes from bounding box offsets and scales.
 
     Given bounding box offsets and scales computed by
-    :meth:`bbox2loc`, this function decodes the representation to
+    `bbox2loc`, this function decodes the representation to
     coordinates in 2D image coordinates.
 
     Given scales and offsets :math:`t_y, t_x, t_h, t_w` and a bounding
@@ -49,7 +45,7 @@ def loc2bbox(src_bbox, loc):
     """
 
     if src_bbox.shape[0] == 0:
-        return xp.zeros((0, 4), dtype=loc.dtype)
+        return np.zeros((0, 4), dtype=loc.dtype)
 
     src_bbox = src_bbox.astype(src_bbox.dtype, copy=False)
 
@@ -63,12 +59,12 @@ def loc2bbox(src_bbox, loc):
     dh = loc[:, 2::4]
     dw = loc[:, 3::4]
 
-    ctr_y = dy * src_height[:, xp.newaxis] + src_ctr_y[:, xp.newaxis]
-    ctr_x = dx * src_width[:, xp.newaxis] + src_ctr_x[:, xp.newaxis]
-    h = xp.exp(dh) * src_height[:, xp.newaxis]
-    w = xp.exp(dw) * src_width[:, xp.newaxis]
+    ctr_y = dy * src_height[:, np.newaxis] + src_ctr_y[:, np.newaxis]
+    ctr_x = dx * src_width[:, np.newaxis] + src_ctr_x[:, np.newaxis]
+    h = np.exp(dh) * src_height[:, np.newaxis]
+    w = np.exp(dw) * src_width[:, np.newaxis]
 
-    dst_bbox = xp.zeros(loc.shape, dtype=loc.dtype)
+    dst_bbox = np.zeros(loc.shape, dtype=loc.dtype)
     dst_bbox[:, 0::4] = ctr_y - 0.5 * h
     dst_bbox[:, 1::4] = ctr_x - 0.5 * w
     dst_bbox[:, 2::4] = ctr_y + 0.5 * h
@@ -129,16 +125,16 @@ def bbox2loc(src_bbox, dst_bbox):
     base_ctr_y = dst_bbox[:, 0] + 0.5 * base_height
     base_ctr_x = dst_bbox[:, 1] + 0.5 * base_width
 
-    eps = xp.finfo(height.dtype).eps
-    height = xp.maximum(height, eps)
-    width = xp.maximum(width, eps)
+    eps = np.finfo(height.dtype).eps
+    height = np.maximum(height, eps)
+    width = np.maximum(width, eps)
 
     dy = (base_ctr_y - ctr_y) / height
     dx = (base_ctr_x - ctr_x) / width
-    dh = xp.log(base_height / height)
-    dw = xp.log(base_width / width)
+    dh = np.log(base_height / height)
+    dw = np.log(base_width / width)
 
-    loc = xp.vstack((dy, dx, dh, dw)).transpose()
+    loc = np.vstack((dy, dx, dh, dw)).transpose()
     return loc
 
 
@@ -173,13 +169,13 @@ def bbox_iou(bbox_a, bbox_b):
         raise IndexError
 
     # top left
-    tl = xp.maximum(bbox_a[:, None, :2], bbox_b[:, :2])
+    tl = np.maximum(bbox_a[:, None, :2], bbox_b[:, :2])
     # bottom right
-    br = xp.minimum(bbox_a[:, None, 2:], bbox_b[:, 2:])
+    br = np.minimum(bbox_a[:, None, 2:], bbox_b[:, 2:])
 
-    area_i = xp.prod(br - tl, axis=2) * (tl < br).all(axis=2)
-    area_a = xp.prod(bbox_a[:, 2:] - bbox_a[:, :2], axis=1)
-    area_b = xp.prod(bbox_b[:, 2:] - bbox_b[:, :2], axis=1)
+    area_i = np.prod(br - tl, axis=2) * (tl < br).all(axis=2)
+    area_a = np.prod(bbox_a[:, 2:] - bbox_a[:, :2], axis=1)
+    area_b = np.prod(bbox_b[:, 2:] - bbox_b[:, :2], axis=1)
     return area_i / (area_a[:, None] + area_b - area_i)
 
 
@@ -231,8 +227,8 @@ def generate_anchor_base(base_size=16, ratios=[0.5, 1, 2],
 
     anchor_base = np.zeros((len(ratios) * len(anchor_scales), 4),
                            dtype=np.float32)
-    for i in six.moves.range(len(ratios)):
-        for j in six.moves.range(len(anchor_scales)):
+    for i in range(len(ratios)):
+        for j in range(len(anchor_scales)):
             h = base_size * anchor_scales[j] * np.sqrt(ratios[i])
             w = base_size * anchor_scales[j] * np.sqrt(1. / ratios[i])
 

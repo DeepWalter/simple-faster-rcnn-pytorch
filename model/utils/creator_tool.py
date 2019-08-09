@@ -6,7 +6,7 @@ from model.utils.nms import non_maximum_suppression
 
 
 class ProposalTargetCreator(object):
-    """Assign ground truth bounding boxes to given RoIs.
+    """Assign ground truth bounding boxes to proposals.
 
     The :meth:`__call__` of this class generates training targets
     for each object proposal.
@@ -30,8 +30,7 @@ class ProposalTargetCreator(object):
     """
 
     def __init__(self,
-                 n_sample=128,
-                 pos_ratio=0.25, pos_iou_thresh=0.5,
+                 n_sample=128, pos_ratio=0.25, pos_iou_thresh=0.5,
                  neg_iou_thresh_hi=0.5, neg_iou_thresh_lo=0.0
                  ):
         self.n_sample = n_sample
