@@ -6,6 +6,7 @@ import cupy as cp
 from utils import array_tool as at
 from model.utils.bbox_tools import loc2bbox
 from model.utils.nms import non_maximum_suppression
+# from model import RegionProposalNetwork
 
 from torch import nn
 from data.dataset import preprocess
@@ -51,7 +52,7 @@ class FasterRCNN(nn.Module):
     ----------
     extractor : nn.Module
         A module that takes a BCHW image array and returns feature maps.
-    rpn : nn.Module
+    rpn : RegionalProposalNetwork
         A module that has the same interface as
         `model.region_proposal_network.RegionProposalNetwork`. Please
         refer to the documentation found there.
@@ -76,6 +77,7 @@ class FasterRCNN(nn.Module):
                  loc_normalize_std=(0.1, 0.1, 0.2, 0.2)
                  ):
         super(FasterRCNN, self).__init__()
+
         self.extractor = extractor
         self.rpn = rpn
         self.head = head
@@ -130,10 +132,11 @@ class FasterRCNN(nn.Module):
         img_size = x.shape[2:]
 
         h = self.extractor(x)
-        rpn_locs, rpn_scores, rois, roi_indices, anchor = \
-            self.rpn(h, img_size, scale)
-        roi_cls_locs, roi_scores = self.head(
-            h, rois, roi_indices)
+        # rpn_locs, rpn_scores, rois, roi_indices, anchor = \
+        #     self.rpn(h, img_size, scale)
+        rpn_locs, rpn_scores, rois, roi_indices = self.rpn(h, img_size, scale)
+        roi_cls_locs, roi_scores = self.head(h, rois, roi_indices)
+
         return roi_cls_locs, roi_scores, rois, roi_indices
 
     def use_preset(self, preset):
@@ -152,7 +155,6 @@ class FasterRCNN(nn.Module):
         Args:
             preset ({'visualize', 'evaluate'): A string to determine the
                 preset to use.
-
         """
         if preset == 'visualize':
             self.nms_thresh = 0.3
@@ -192,28 +194,25 @@ class FasterRCNN(nn.Module):
 
         This method predicts objects for each image.
 
-        Args:
-            imgs (iterable of numpy.ndarray): Arrays holding images.
-                All images are in CHW and RGB format
-                and the range of their value is :math:`[0, 255]`.
+        Parameters
+        ----------
+        imgs : iterable of numpy.ndarray
+            Arrays holding images. All images are in CHW and RGB format
+            and the range of their value is `[0, 255]`.
 
-        Returns:
-           tuple of lists:
-           This method returns a tuple of three lists,
-           :obj:`(bboxes, labels, scores)`.
-
-           * **bboxes**: A list of float arrays of shape :math:`(R, 4)`, \
-               where :math:`R` is the number of bounding boxes in a image. \
-               Each bouding box is organized by \
-               :math:`(y_{min}, x_{min}, y_{max}, x_{max})` \
-               in the second axis.
-           * **labels** : A list of integer arrays of shape :math:`(R,)`. \
-               Each value indicates the class of the bounding box. \
-               Values are in range :math:`[0, L - 1]`, where :math:`L` is the \
-               number of the foreground classes.
-           * **scores** : A list of float arrays of shape :math:`(R,)`. \
-               Each value indicates how confident the prediction is.
-
+        Returns
+        -------
+        bboxes, labels, scores : tuple of lists
+           * **bboxes**: A list of float arrays of shape `(R, 4)`, where
+            `R` is the number of bounding boxes in a image. Each bouding
+            box is organized by `(y_{min}, x_{min}, y_{max}, x_{max})`
+            in the second axis.
+           * **labels**: A list of integer arrays of shape `(R,)`. Each
+            value indicates the class of the bounding box. Values are in
+            range `[0, L - 1]`, where `L` is the number of the foreground
+            classes.
+           * **scores**: A list of float arrays of shape `(R,)`. Each
+           value indicates how confident the prediction is.
         """
         self.eval()
         if visualize:
