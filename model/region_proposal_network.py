@@ -3,8 +3,8 @@ from torch.nn import functional as F
 import torch as t
 from torch import nn
 
-# from model.utils.bbox_tools import generate_anchor_base
-# from model.utils.creator_tool import ProposalCreator
+from model.utils.bbox_tools import generate_anchor_base
+from model.utils.creator_tool import ProposalCreator
 
 
 class RegionProposalNetwork(nn.Module):
@@ -50,6 +50,7 @@ class RegionProposalNetwork(nn.Module):
                  anchor_scales=[8, 16, 32], feat_stride=16,
                  proposal_creator_params=dict()):
         super(RegionProposalNetwork, self).__init__()
+
         self.anchor_base = generate_anchor_base(
             anchor_scales=anchor_scales, ratios=ratios)
         self.feat_stride = feat_stride
@@ -58,6 +59,7 @@ class RegionProposalNetwork(nn.Module):
         self.conv1 = nn.Conv2d(in_channels, mid_channels, 3, 1, 1)
         self.score = nn.Conv2d(mid_channels, n_anchor * 2, 1, 1, 0)
         self.loc = nn.Conv2d(mid_channels, n_anchor * 4, 1, 1, 0)
+
         normal_init(self.conv1, 0, 0.01)
         normal_init(self.score, 0, 0.01)
         normal_init(self.loc, 0, 0.01)
@@ -140,6 +142,7 @@ class RegionProposalNetwork(nn.Module):
 
 
 def _enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
+    """Generate anchors on the input image."""
     # Enumerate all shifted anchors:
     #
     # add A anchors (1, A, 4) to
@@ -150,9 +153,10 @@ def _enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
 
     # !TODO: add support for torch.CudaTensor
     # xp = cuda.get_array_module(anchor_base)
-    # it seems that it can't be boosed using GPU
+    # it seems that it can't be boosted using GPU
     shift_y = np.arange(0, height * feat_stride, feat_stride)
     shift_x = np.arange(0, width * feat_stride, feat_stride)
+    # TODO: try np.ndindex
     shift_x, shift_y = np.meshgrid(shift_x, shift_y)
     shift = np.stack((shift_y.ravel(), shift_x.ravel(),
                       shift_y.ravel(), shift_x.ravel()), axis=1)
